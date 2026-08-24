@@ -370,7 +370,8 @@ async def main():
         action="store_true",
         help="remove every doc comment and doc end from the source files",
     )
-
+    
+    # update runs only when the flag is there
     parser.add_argument(
         "--update",
         action="store_true",
