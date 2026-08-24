@@ -403,13 +403,9 @@ async def main():
     # print(file_list)
     await dispatch(file_list, args.out, args.clean, args.cleanall)
 
-    # the success message comes first, the update check runs at the
-    # end so the file reading is never slowed down by the network
+    # the success message comes first
     print(f"documentation written to {args.out}")
-    await check_for_update(apply=False)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-# Doc end
