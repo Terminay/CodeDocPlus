@@ -5,21 +5,88 @@ import re
 from pathlib import Path
 from urllib.parse import quote, urlsplit, urlunsplit
 
-from flask import Flask, abort, render_template, send_file, url_for
+from flask import Flask, abort, render_template, send_file, url_for, send_from_directory
 from markdown_it import MarkdownIt
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = PROJECT_ROOT / "codedocplus.json"
 DEFAULT_THEME = {
-    "accent": "#c6532f",
-    "background": "#f3f0e8",
-    "surface": "#fffdf8",
-    "text": "#25271f",
-    "muted": "#74776b",
-    "border": "#d9d5c9",
+    # -- Palette ----------------------------------------------------------
+    "accent":      "#c6532f",   # Primary accent (links, active states)
+    "accent_dark": "#a03d1e",   # Darker accent used for hovers
+    "background":  "#f5f5f5",   # Page background
+    "surface":     "#ffffff",   # Sidebar / card background
+    "text":        "#333333",   # Body text
+    "muted":       "#888888",   # Secondary / subdued text
+    "border":      "#e0e0e0",   # Borders and dividers
+    # -- Navbar -----------------------------------------------------------
+    "navbar_bg":   "#c6532f",   # Navbar background colour
+    "navbar_text": "#ffffff",   # Navbar text / icon colour
+    # -- Typography -------------------------------------------------------
+    "font_family": "'Helvetica Neue', Arial, sans-serif",
+    # -- Layout -----------------------------------------------------------
+    "sidebar_width": "260px",   # Sidebar width (CSS length)
+    # -- Code blocks (preset: dark | light | monokai | github) -----------
+    "code_theme":    "dark",
+    "code_bg":       "#2b2b2b",
+    "code_color":    "#f8f8f2",
+    "code_keyword":  "#66d9e8",
+    "code_string":   "#a8ff60",
+    "code_comment":  "#75715e",
+    "code_number":   "#ae81ff",
+    "code_function": "#a6e22e",
 }
-THEME_KEYS = set(DEFAULT_THEME)
+
+# Hex colour keys that must pass the COLOR_PATTERN validator
+_HEX_COLOR_KEYS = {
+    "accent", "accent_dark", "background", "surface", "text",
+    "muted", "border", "navbar_bg", "navbar_text",
+    "code_bg", "code_color", "code_keyword", "code_string",
+    "code_comment", "code_number", "code_function",
+}
+
+# Code-theme colour presets
+CODE_THEMES = {
+    "dark": {
+        "code_bg":       "#2b2b2b",
+        "code_color":    "#f8f8f2",
+        "code_keyword":  "#66d9e8",
+        "code_string":   "#a8ff60",
+        "code_comment":  "#75715e",
+        "code_number":   "#ae81ff",
+        "code_function": "#a6e22e",
+    },
+    "light": {
+        "code_bg":       "#f8f8f8",
+        "code_color":    "#333333",
+        "code_keyword":  "#0070c1",
+        "code_string":   "#267f00",
+        "code_comment":  "#6a9955",
+        "code_number":   "#098658",
+        "code_function": "#795e26",
+    },
+    "monokai": {
+        "code_bg":       "#272822",
+        "code_color":    "#f8f8f2",
+        "code_keyword":  "#f92672",
+        "code_string":   "#e6db74",
+        "code_comment":  "#75715e",
+        "code_number":   "#ae81ff",
+        "code_function": "#a6e22e",
+    },
+    "github": {
+        "code_bg":       "#f6f8fa",
+        "code_color":    "#24292e",
+        "code_keyword":  "#d73a49",
+        "code_string":   "#032f62",
+        "code_comment":  "#6a737d",
+        "code_number":   "#005cc5",
+        "code_function": "#6f42c1",
+    },
+}
+
+THEME_KEYS    = set(DEFAULT_THEME)
 COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$")
 
 
@@ -60,13 +127,34 @@ def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None
     configured_theme = config.get("theme", {})
     if not isinstance(configured_theme, dict):
         raise ValueError("site config 'theme' must be a JSON object")
-    unknown_colors = set(configured_theme) - THEME_KEYS
-    if unknown_colors:
-        raise ValueError(f"unknown theme color(s): {', '.join(sorted(unknown_colors))}")
-    theme = {**DEFAULT_THEME, **configured_theme}
-    for key, color in theme.items():
-        if not isinstance(color, str) or not COLOR_PATTERN.fullmatch(color):
+    unknown_keys = set(configured_theme) - THEME_KEYS
+    if unknown_keys:
+        raise ValueError(f"unknown theme key(s): {', '.join(sorted(unknown_keys))}")
+
+    # Merge defaults, then apply code-theme preset (if any), then user overrides
+    theme = {**DEFAULT_THEME}
+    preset_name = configured_theme.get("code_theme", DEFAULT_THEME["code_theme"])
+    if preset_name not in CODE_THEMES:
+        raise ValueError(
+            f"unknown code_theme '{preset_name}'; valid presets: "
+            + ", ".join(sorted(CODE_THEMES))
+        )
+    theme.update(CODE_THEMES[preset_name])  # apply preset first
+    theme.update(configured_theme)           # user overrides win
+
+    # Validate hex colours
+    for key in _HEX_COLOR_KEYS:
+        value = theme.get(key, "")
+        if not isinstance(value, str) or not COLOR_PATTERN.fullmatch(value):
             raise ValueError(f"site config theme '{key}' must be a 3- or 6-digit hex color")
+
+    # Validate sidebar_width (simple check: non-empty string)
+    if not isinstance(theme.get("sidebar_width", ""), str) or not theme["sidebar_width"].strip():
+        raise ValueError("site config theme 'sidebar_width' must be a non-empty CSS length string")
+
+    # Validate font_family (non-empty string)
+    if not isinstance(theme.get("font_family", ""), str) or not theme["font_family"].strip():
+        raise ValueError("site config theme 'font_family' must be a non-empty string")
 
     custom_css = config.get("custom_css")
     if custom_css is not None:
@@ -80,12 +168,32 @@ def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None
             raise ValueError(f"custom CSS file does not exist or is not a .css file: {css_path}")
         custom_css = css_path
 
+    # Logo: optional path to an image file
+    logo = config.get("logo")
+    if logo is not None:
+        if not isinstance(logo, str) or not logo:
+            raise ValueError("site config 'logo' must be a file path string")
+        logo_path = Path(logo).expanduser()
+        if not logo_path.is_absolute():
+            logo_path = config_file.parent / logo_path
+        logo_path = logo_path.resolve()
+        if not logo_path.is_file():
+            raise ValueError(f"logo file does not exist: {logo_path}")
+        logo = logo_path
+
+    # Footer text: optional custom string
+    footer_text = config.get("footer_text")
+    if footer_text is not None and not isinstance(footer_text, str):
+        raise ValueError("site config 'footer_text' must be a string")
+
     return {
         "title": title.strip(),
         "tagline": tagline.strip(),
         "docs_path": docs_path,
         "theme": theme,
         "custom_css": custom_css,
+        "logo": logo,
+        "footer_text": footer_text,
     }
 
 
@@ -192,6 +300,8 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
         DOCS_ROOT=settings["docs_path"],
         THEME=settings["theme"],
         CUSTOM_CSS=settings["custom_css"],
+        LOGO=settings["logo"],
+        FOOTER_TEXT=settings["footer_text"],
     )
 
     @app.context_processor
@@ -201,6 +311,8 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
             "tagline": app.config["TAGLINE"],
             "theme": app.config["THEME"],
             "custom_css": app.config["CUSTOM_CSS"],
+            "logo": app.config["LOGO"],
+            "footer_text": app.config["FOOTER_TEXT"],
         }
 
     @app.get("/")
@@ -254,6 +366,13 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
         if path is None:
             abort(404)
         return send_file(path, mimetype="text/css")
+
+    @app.get("/logo")
+    def custom_logo():
+        logo_path = app.config["LOGO"]
+        if logo_path is None:
+            abort(404)
+        return send_file(logo_path)
 
     return app
 

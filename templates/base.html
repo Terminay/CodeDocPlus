@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="{{ theme.background }}">
+    <meta name="theme-color" content="{{ theme.navbar_bg }}">
     <title>{{ page_title }} — {{ site_title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
     {% if custom_css %}
@@ -11,65 +11,97 @@
     {% endif %}
     <style>
       :root {
-        --ink: {{ theme.text }};
-        --paper: {{ theme.background }};
-        --sheet: {{ theme.surface }};
-        --accent: {{ theme.accent }};
-        --muted: {{ theme.muted }};
-        --rule: {{ theme.border }};
+        --accent:        {{ theme.accent }};
+        --accent-dark:   {{ theme.accent_dark }};
+        --ink:           {{ theme.text }};
+        --paper:         {{ theme.background }};
+        --sheet:         {{ theme.surface }};
+        --muted:         {{ theme.muted }};
+        --rule:          {{ theme.border }};
+        --navbar-bg:     {{ theme.navbar_bg }};
+        --navbar-text:   {{ theme.navbar_text }};
+        --sidebar-w:     {{ theme.sidebar_width }};
+        --body-font:     {{ theme.font_family }};
+        --code-bg:       {{ theme.code_bg }};
+        --code-color:    {{ theme.code_color }};
+        --code-keyword:  {{ theme.code_keyword }};
+        --code-string:   {{ theme.code_string }};
+        --code-comment:  {{ theme.code_comment }};
+        --code-number:   {{ theme.code_number }};
+        --code-function: {{ theme.code_function }};
       }
     </style>
   </head>
   <body>
-    <div class="site-shell">
-      <aside class="sidebar">
-        <a class="brand" href="{{ url_for('index') }}" aria-label="{{ site_title }} home">
-          <span class="brand-mark" aria-hidden="true">C<span>+</span></span>
-          <span class="brand-name">{{ site_title }}<small>FIELD NOTES</small></span>
-        </a>
 
-        <div class="sidebar-rule"></div>
-        <p class="nav-caption">YOUR LIBRARY <span>{{ documents|length }}</span></p>
-        <label class="search-box">
-          <span class="search-icon" aria-hidden="true">⌕</span>
-          <input id="document-search" type="search" placeholder="Find a page" autocomplete="off" aria-label="Filter documentation pages">
-          <kbd>/</kbd>
-        </label>
-
-        <nav class="document-nav" aria-label="Documentation">
-          {% for document in documents %}
-          <a class="document-link{% if document.path == current_document|default('') %} is-current{% endif %}"
-             href="{{ url_for('show_document', document=document.path) }}"
-             data-document-link>
-            <span class="file-glyph" aria-hidden="true">↳</span>
-            <span>{{ document.title }}</span>
+    <!-- ─── TOP NAVBAR ─────────────────────────────────────────────────── -->
+    <nav class="navbar" aria-label="Site navigation">
+      <div class="navbar-inner">
+        <div class="navbar-brand-group">
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="sidebar">
+            <span></span><span></span><span></span>
+          </button>
+          <a class="navbar-brand" href="{{ url_for('index') }}">
+            {% if logo %}
+            <img class="navbar-logo" src="{{ url_for('custom_logo') }}" alt="{{ site_title }} logo">
+            {% else %}
+            <span class="navbar-logo-mark" aria-hidden="true">C<sup>+</sup></span>
+            {% endif %}
+            <span class="navbar-title">{{ site_title }}</span>
           </a>
-          {% else %}
-          <p class="nav-empty">No Markdown pages yet.</p>
-          {% endfor %}
-          <p class="search-empty" hidden>No matching pages.</p>
-        </nav>
+        </div>
+        <div class="navbar-links">
+          <a class="navbar-link" href="{{ url_for('index') }}">Home</a>
+        </div>
+      </div>
+    </nav>
 
-        <div class="sidebar-footer">
-          <span class="status-dot"></span>
-          <span>MADE FOR THE MARGINS</span>
-          <span class="footer-spark" aria-hidden="true">✳</span>
+    <!-- ─── PAGE SHELL ──────────────────────────────────────────────────── -->
+    <div class="page-shell">
+
+      <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
+      <aside class="sidebar" id="sidebar" aria-label="Document navigation">
+        <div class="sidebar-inner">
+          <div class="sidebar-section-label">Documentation</div>
+          <label class="sidebar-search-wrap" for="document-search">
+            <svg class="search-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <input id="document-search" type="search" placeholder="Search pages…" autocomplete="off" aria-label="Filter documentation pages">
+          </label>
+          <nav class="sidebar-nav" aria-label="Documentation pages">
+            {% for document in documents %}
+            <a class="sidebar-link{% if document.path == current_document|default('') %} is-active{% endif %}"
+               href="{{ url_for('show_document', document=document.path) }}"
+               data-document-link>
+              <svg class="sidebar-link-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M10 2v3h3" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+              {{ document.title }}
+            </a>
+            {% else %}
+            <p class="sidebar-empty">No Markdown pages yet.</p>
+            {% endfor %}
+            <p class="search-empty" hidden>No matching pages.</p>
+          </nav>
         </div>
       </aside>
 
-      <main class="main-area">
-        <header class="topbar">
-          <div class="breadcrumb"><span>CODEDOCPLUS</span><span class="crumb-slash">/</span><span>{{ page_title }}</span></div>
-          <a class="topbar-home" href="{{ url_for('index') }}">All pages <span aria-hidden="true">↗</span></a>
-        </header>
+      <!-- ─── MAIN CONTENT ─────────────────────────────────────────────── -->
+      <main class="main-content" id="main-content">
         {% block content %}{% endblock %}
-        <footer class="page-footer">
-          <span>{{ site_title }} <span aria-hidden="true">·</span> Documentation, made legible.</span>
-          <span class="footer-line"></span>
-          <span>KEEP FOLLOWING THE THREAD <span aria-hidden="true">↗</span></span>
+
+        <footer class="site-footer">
+          <span>{{ footer_text if footer_text else site_title ~ " · Powered by CodeDocPlus" }}</span>
         </footer>
       </main>
-    </div>
+
+    </div><!-- /.page-shell -->
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+
     <script src="{{ url_for('static', filename='site.js') }}" defer></script>
   </body>
 </html>

@@ -1,27 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="document-page">
-  <div class="eyebrow"><span class="eyebrow-rule"></span> READING ROOM <span class="eyebrow-count">{{ current_document }}</span></div>
-  <div class="document-heading">
-    <div>
-      <p class="document-kicker">{{ current_document }}</p>
-      <h1>{{ document_title }}</h1>
-    </div>
-    <a class="back-link" href="{{ url_for('index') }}"><span aria-hidden="true">←</span> Library</a>
-  </div>
-  <div class="document-layout">
-    <article class="markdown-body">{{ content|safe }}</article>
+<div class="content-wrapper doc-content-wrapper">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <a href="{{ url_for('index') }}" class="breadcrumb-link">Home</a>
+    <span class="breadcrumb-sep" aria-hidden="true">»</span>
+    <span class="breadcrumb-current">{{ document_title }}</span>
+  </nav>
+
+  <div class="doc-layout">
+    <!-- Article -->
+    <article class="markdown-body">
+      <h1 class="doc-page-title">{{ document_title }}</h1>
+      {{ content|safe }}
+    </article>
+
+    <!-- ToC -->
     {% if toc %}
     <aside class="toc-panel" aria-label="On this page">
-      <p class="toc-title">ON THIS PAGE</p>
+      <p class="toc-heading">On This Page</p>
       <nav>
         {% for item in toc %}
-        <a class="toc-link toc-level-{{ item.level }}" href="#{{ item.id }}">{{ item.title }}</a>
+        <a class="toc-link toc-level-{{ item.level }}" href="#{{ item.id }}" data-toc-link>{{ item.title }}</a>
         {% endfor %}
       </nav>
     </aside>
     {% endif %}
   </div>
+
 </div>
 {% endblock %}

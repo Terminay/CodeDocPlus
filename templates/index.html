@@ -1,38 +1,42 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="library-page">
-  <div class="eyebrow"><span class="eyebrow-rule"></span> THE DOCUMENTATION LIBRARY <span class="eyebrow-count">{{ "%02d"|format(documents|length) }} PAGES</span></div>
-  <div class="library-intro">
-    <h1>Good ideas<br><em>leave a trail.</em></h1>
-    <p>{{ tagline }}</p>
-  </div>
-  <div class="library-meta">
-    <span>START EXPLORING</span>
-    <span class="library-meta-line"></span>
-    <span>{{ documents|length }} {{ "DOCUMENT" if documents|length == 1 else "DOCUMENTS" }}</span>
+<div class="content-wrapper">
+  <div class="content-header">
+    <h1 class="content-title">{{ site_title }}</h1>
+    <p class="content-tagline">{{ tagline }}</p>
   </div>
 
   {% if documents %}
-  <div class="document-grid">
+  <div class="doc-list">
     {% for document in documents %}
-    <a class="document-card" href="{{ url_for('show_document', document=document.path) }}">
-      <span class="card-index">{{ "%02d"|format(loop.index) }}</span>
-      <span class="card-content">
-        <span class="card-kicker">{{ document.path }}</span>
-        <span class="card-title">{{ document.title }}</span>
-        <span class="card-open">OPEN DOCUMENT <span aria-hidden="true">↗</span></span>
-      </span>
-      <span class="card-arrow" aria-hidden="true">↗</span>
+    <a class="doc-row" href="{{ url_for('show_document', document=document.path) }}">
+      <div class="doc-row-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M4 4h10l6 6v10H4V4z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M14 4v6h6" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="doc-row-body">
+        <span class="doc-row-title">{{ document.title }}</span>
+        <span class="doc-row-path">{{ document.path }}</span>
+      </div>
+      <svg class="doc-row-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M4 8h8M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </a>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-library">
-    <span class="empty-mark" aria-hidden="true">✳</span>
-    <h2>Your first page starts here.</h2>
-    <p>Add a Markdown file to the configured documentation folder and it will appear in this library.</p>
+  <div class="empty-state">
+    <svg class="empty-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <rect x="8" y="6" width="28" height="36" rx="2" stroke="currentColor" stroke-width="2"/>
+      <path d="M16 17h16M16 24h16M16 31h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <h2>No documents found</h2>
+    <p>Add Markdown files to your <code>docs/</code> folder and they will appear here.</p>
   </div>
   {% endif %}
-</section>
+</div>
 {% endblock %}
