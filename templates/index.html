@@ -2,15 +2,15 @@
 
 {% block content %}
 <section class="library-page">
-  <div class="eyebrow"><span class="eyebrow-rule"></span> THE DOCUMENTATION LIBRARY <span class="eyebrow-count">{{ "%02d"|format(documents|length) }} PAGES</span></div>
+  <p class="page-eyebrow">Documentation</p>
   <div class="library-intro">
-    <h1>Good ideas<br><em>leave a trail.</em></h1>
+    <h1>{{ site_title }}</h1>
     <p>{{ tagline }}</p>
   </div>
   <div class="library-meta">
-    <span>START EXPLORING</span>
-    <span class="library-meta-line"></span>
-    <span>{{ documents|length }} {{ "DOCUMENT" if documents|length == 1 else "DOCUMENTS" }}</span>
+    <span>{{ documents|length }} {{ "page" if documents|length == 1 else "pages" }}</span>
+    <span class="meta-line"></span>
+    <span>{{ site_title }}</span>
   </div>
 
   {% if documents %}
@@ -18,20 +18,16 @@
     {% for document in documents %}
     <a class="document-card" href="{{ url_for('show_document', document=document.path) }}">
       <span class="card-index">{{ "%02d"|format(loop.index) }}</span>
-      <span class="card-content">
-        <span class="card-kicker">{{ document.path }}</span>
-        <span class="card-title">{{ document.title }}</span>
-        <span class="card-open">OPEN DOCUMENT <span aria-hidden="true">↗</span></span>
-      </span>
-      <span class="card-arrow" aria-hidden="true">↗</span>
+      <span class="card-kicker">{{ document.path }}</span>
+      <span class="card-title">{{ document.title }}</span>
+      <span class="card-open">Read →</span>
     </a>
     {% endfor %}
   </div>
   {% else %}
   <div class="empty-library">
-    <span class="empty-mark" aria-hidden="true">✳</span>
-    <h2>Your first page starts here.</h2>
-    <p>Add a Markdown file to the configured documentation folder and it will appear in this library.</p>
+    <h2>No pages yet</h2>
+    <p>Add a Markdown file to the configured documentation folder and it will appear here.</p>
   </div>
   {% endif %}
 </section>
