@@ -1,6 +1,6 @@
-# CodeDoc
+# CodeDocPlus
 
-A CLI tool that turns specialized `Doc` comments in your source code into a single markdown document. 
+A documentation tool that turns specialized `Doc` comments into Markdown and serves Markdown files as a customizable website.
 
 It scans a directory recursively, extracts every `Doc` comment block from the supported languages, and writes the result to a markdown file in the same order as the files on disk.
 
@@ -86,6 +86,54 @@ Running from source instead (no install needed):
 ```
 python3 main.py [path] [-o OUT] [-exd DIRS ...] [-exf FILES ...]
 ```
+
+## Serve the docs as a website
+
+CodeDocPlus can serve Markdown files as a browsable documentation site. Install
+the web dependencies and start the local server:
+
+```
+python -m pip install -r requirements.txt
+python web.py
+```
+
+Open `http://127.0.0.1:8000`. By default, the site reads Markdown files from
+the `docs/` directory, including nested folders. You can select another folder
+when starting the site:
+
+```
+python web.py --docs-dir path/to/markdown
+```
+
+Customize the site using `codedocplus.json`:
+
+```json
+{
+  "title": "My Project",
+  "tagline": "Notes and guides for the team.",
+  "docs_dir": "docs",
+  "theme": {
+    "accent": "#c6532f",
+    "background": "#f3f0e8",
+    "surface": "#fffdf8",
+    "text": "#25271f",
+    "muted": "#74776b",
+    "border": "#d9d5c9"
+  },
+  "custom_css": "site-overrides.css"
+}
+```
+
+Paths in the config are relative to the config file. `custom_css` is optional;
+use it to override the site's styles. The theme colors accept three- or
+six-digit hex values. Pass `--config path/to/config.json` to use another
+configuration file. The server binds to `127.0.0.1` by default; use `--host`
+and `--port` to change its address.
+
+The site includes page navigation, a keyboard-focusable page filter (`/`),
+per-page heading links, Markdown tables and code fences, relative links to
+other Markdown pages, and images/assets stored inside the documentation
+folder. Raw HTML embedded in Markdown is not rendered.
 
 Notes:
 

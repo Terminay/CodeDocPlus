@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="document-page">
+  <div class="eyebrow"><span class="eyebrow-rule"></span> READING ROOM <span class="eyebrow-count">{{ current_document }}</span></div>
+  <div class="document-heading">
+    <div>
+      <p class="document-kicker">{{ current_document }}</p>
+      <h1>{{ document_title }}</h1>
+    </div>
+    <a class="back-link" href="{{ url_for('index') }}"><span aria-hidden="true">←</span> Library</a>
+  </div>
+  <div class="document-layout">
+    <article class="markdown-body">{{ content|safe }}</article>
+    {% if toc %}
+    <aside class="toc-panel" aria-label="On this page">
+      <p class="toc-title">ON THIS PAGE</p>
+      <nav>
+        {% for item in toc %}
+        <a class="toc-link toc-level-{{ item.level }}" href="#{{ item.id }}">{{ item.title }}</a>
+        {% endfor %}
+      </nav>
+    </aside>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

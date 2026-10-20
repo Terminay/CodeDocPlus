@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="{{ theme.background }}">
+    <title>{{ page_title }} — {{ site_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+    {% if custom_css %}
+    <link rel="stylesheet" href="{{ url_for('custom_stylesheet') }}">
+    {% endif %}
+    <style>
+      :root {
+        --ink: {{ theme.text }};
+        --paper: {{ theme.background }};
+        --sheet: {{ theme.surface }};
+        --accent: {{ theme.accent }};
+        --muted: {{ theme.muted }};
+        --rule: {{ theme.border }};
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <aside class="sidebar">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="{{ site_title }} home">
+          <span class="brand-mark" aria-hidden="true">C<span>+</span></span>
+          <span class="brand-name">{{ site_title }}<small>FIELD NOTES</small></span>
+        </a>
+
+        <div class="sidebar-rule"></div>
+        <p class="nav-caption">YOUR LIBRARY <span>{{ documents|length }}</span></p>
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="document-search" type="search" placeholder="Find a page" autocomplete="off" aria-label="Filter documentation pages">
+          <kbd>/</kbd>
+        </label>
+
+        <nav class="document-nav" aria-label="Documentation">
+          {% for document in documents %}
+          <a class="document-link{% if document.path == current_document|default('') %} is-current{% endif %}"
+             href="{{ url_for('show_document', document=document.path) }}"
+             data-document-link>
+            <span class="file-glyph" aria-hidden="true">↳</span>
+            <span>{{ document.title }}</span>
+          </a>
+          {% else %}
+          <p class="nav-empty">No Markdown pages yet.</p>
+          {% endfor %}
+          <p class="search-empty" hidden>No matching pages.</p>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span>MADE FOR THE MARGINS</span>
+          <span class="footer-spark" aria-hidden="true">✳</span>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>CODEDOCPLUS</span><span class="crumb-slash">/</span><span>{{ page_title }}</span></div>
+          <a class="topbar-home" href="{{ url_for('index') }}">All pages <span aria-hidden="true">↗</span></a>
+        </header>
+        {% block content %}{% endblock %}
+        <footer class="page-footer">
+          <span>{{ site_title }} <span aria-hidden="true">·</span> Documentation, made legible.</span>
+          <span class="footer-line"></span>
+          <span>KEEP FOLLOWING THE THREAD <span aria-hidden="true">↗</span></span>
+        </footer>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+  </body>
+</html>
