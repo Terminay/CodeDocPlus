@@ -1,0 +1,14 @@
+const config = {
+  title: "CodeDocPlus",
+  tagline: "A quiet, searchable home for the knowledge tucked inside your code.",
+  theme: {
+    accent: "#c6532f",
+    background: "#f3f0e8",
+    surface: "#fffdf8",
+    text: "#25271f",
+    muted: "#74776b",
+    border: "#d9d5c9",
+  },
+};
+
+export default config;
