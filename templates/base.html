@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="{{ theme.navbar_bg }}">
     <title>{{ page_title }} — {{ site_title }}</title>
+    <!-- Anti-flash theme bootstrap: runs before CSS paints -->
+    <script>
+      (function(){
+        try {
+          var saved = localStorage.getItem('cdp-theme');
+          if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch(e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
     {% if custom_css %}
     <link rel="stylesheet" href="{{ url_for('custom_stylesheet') }}">
@@ -50,7 +63,27 @@
             <span class="navbar-title">{{ site_title }}</span>
           </a>
         </div>
+
+        <!-- ─── NAVBAR SEARCH (centre) ──────────────────────────────────── -->
+        <label class="navbar-search" for="document-search" aria-label="Search pages">
+          <svg class="navbar-search-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <input id="document-search" type="search" placeholder="Search pages…" autocomplete="off">
+          <kbd>/</kbd>
+        </label>
+
         <div class="navbar-links">
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <a class="navbar-link" href="{{ url_for('index') }}">Home</a>
         </div>
       </div>
@@ -63,13 +96,6 @@
       <aside class="sidebar" id="sidebar" aria-label="Document navigation">
         <div class="sidebar-inner">
           <div class="sidebar-section-label">Documentation</div>
-          <label class="sidebar-search-wrap" for="document-search">
-            <svg class="search-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-            <input id="document-search" type="search" placeholder="Search pages…" autocomplete="off" aria-label="Filter documentation pages">
-          </label>
           <nav class="sidebar-nav" aria-label="Documentation pages">
             {% for document in documents %}
             <a class="sidebar-link{% if document.path == current_document|default('') %} is-active{% endif %}"

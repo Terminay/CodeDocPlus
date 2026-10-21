@@ -1,233 +1,248 @@
-# CodeDocPlus
+<h1 align="center">CodeDocPlus</h1>
 
-A documentation tool that turns specialized `Doc` comments into Markdown and serves Markdown files as a customizable website.
+<p align="center">
+  Write docs in your code comments. Get Markdown and a searchable docs site.
+</p>
 
-It scans a directory recursively, extracts every `Doc` comment block from the supported languages, and writes the result to a markdown file in the same order as the files on disk.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey" alt="Platform">
+</p>
 
-## Installation
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#docs-site">Docs site</a> ·
+  <a href="#supported-languages">Languages</a> ·
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="README.ru.md">Русский</a>
+</p>
 
-**Linux / macOS** (requires Python 3.10+ and curl):
+---
 
-```
+CodeDocPlus pulls documentation out of special comments in your source files and writes it to Markdown, keeping your folder structure. It also ships a small web server that turns those Markdown files into a docs site with search, a table of contents, and light/dark themes.
+
+- **No dependencies for the CLI.** Pure Python 3.10+ standard library.
+- **25+ languages.** C, C++, Rust, Go, Python, TypeScript, Java, Swift, Zig, Lua, and more.
+- **Docs live next to the code.** Mark a region with a comment, and it shows up in the output.
+- **Built-in docs site.** Sidebar navigation, sticky table of contents, search (press `/`), and light/dark mode.
+- **Themeable.** Colors, fonts, code highlighting, logo, and footer are set in one JSON file.
+
+## Quick start
+
+Install:
+
+```bash
+# Linux / macOS
 curl -fsSL https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.sh | bash
 ```
 
-**Windows** (requires Python 3.10+):
-
-```
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.ps1 | iex"
-```
-
-This installs the `codedoc` command to `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\codedoc\bin` (Windows) and adds it to your PATH. Open a new terminal and run `codedoc` from anywhere.
-
-Installer options (`install/install.sh`): `--no-modify-path` to skip touching your shell config, `--local <dir>` to install from a local copy of the project (useful for development).
-
-Uninstall:
-
-```
-bash install/uninstall.sh                    # Linux/macOS
-powershell -File install/uninstall.ps1       # Windows
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.ps1 | iex
 ```
 
-## Updating
+Mark up some code:
 
-`codedoc --update` checks for and applies the latest version, it only updates and skips the documentation run:
-
-```
-codedoc --update
-```
-
-Every normal run also checks for updates at the end and prints a note when a newer version is available, the check runs after the documentation is written so it never slows the file reading down.
-
-Uninstall with the tool itself:
-
-```
-codedoc --uninstall
-```
-
-or with the script:
-
-```
-bash install/uninstall.sh
+```c
+//Doc code : Entry point
+/*
+ * Boots the system and verifies memory.
+ */
+int main(void)
+{
+    printf("hello\n");
+    return 0;
+}
+//Doc end
 ```
 
-## Requirements
+Generate Markdown:
 
-- Python 3.10 or newer
-- no pip needed
+```bash
+codedoc src/ -o docs/api
+```
 
-## Usage
+Serve it:
+
+```bash
+pip install -r requirements.txt
+python web.py
+```
+
+Open <http://127.0.0.1:8000>.
+
+## How it works
+
+Three comment markers control extraction:
+
+| Marker | What it does |
+|:---|:---|
+| `Doc` | Starts an untitled section. The code that follows is captured as a code block. |
+| `Doc code : <title>` | Starts a section with a `## <title>` heading. A comment block right after it becomes the description, and the code after that becomes the code block. |
+| `Doc end` | Closes the current section. |
+
+The C example above produces:
+
+````markdown
+# main.c
+
+## Entry point
+
+Boots the system and verifies memory.
+
+```c
+int main(void)
+{
+    printf("hello\n");
+    return 0;
+}
+```
+````
+
+Files are scanned concurrently, and the output mirrors your directory layout.
+
+```
+source files  →  codedoc (parser)  →  Markdown  →  web.py  →  docs site
+```
+
+## CLI reference
 
 ```
 codedoc [path] [-o OUT] [-exd DIRS ...] [-exf FILES ...] [-c] [-ca]
 ```
 
-| Option | Description |
-| --- | --- |
-| `path` | directory to scan, defaults to the current directory |
-| `-o`, `--output` | output file name, `.md` is appended automatically, defaults to `out` |
-| `-exd`, `--exclude-dirs` | directories to skip (in addition to the built-in ignore list) |
-| `-exf`, `--exclude-files` | files to skip |
-| `-c`, `--clean` | remove `Doc end` comments from the source files (documents them first) |
-| `-ca`, `--cleanall` | remove every doc comment and `Doc end` from the source files, the code stays (documents them first) |
-| `--update` | update codedoc to the latest version, skips the documentation run |
-| `--uninstall` | remove codedoc, its launcher and the path lines, skips the documentation run |
+| Option | Default | Description |
+|:---|:---|:---|
+| `path` | `.` | Directory to scan |
+| `-o`, `--output` | `out` | Output Markdown file (`.md` is added for you) |
+| `-exd`, `--exclude-dirs` | built-in list | Extra directories to skip |
+| `-exf`, `--exclude-files` | none | Specific files to skip |
+| `-c`, `--clean` | off | Remove `Doc end` markers from source files after reading |
+| `-ca`, `--cleanall` | off | Remove all `Doc` markers, leaving plain source |
+| `--update` | | Install the latest release |
+| `--uninstall` | | Remove the launcher and PATH entry |
 
-Examples:
+More examples:
 
-```
-codedoc                            # scan "." and write out.md
-codedoc src/ -o docs/api           # scan src/ and write docs/api.md
-codedoc . -o out -exd test build -exf setup.py
-```
+```bash
+# Scan the current directory, write out.md
+codedoc
 
-Running from source instead (no install needed):
+# Skip folders and files
+codedoc . -o out -exd test build cache -exf setup.py
 
-```
-python3 main.py [path] [-o OUT] [-exd DIRS ...] [-exf FILES ...]
-```
-
-## Serve the docs as a website
-
-CodeDocPlus can serve Markdown files as a browsable documentation site. Install
-the web dependencies and start the local server:
-
-```
-python -m pip install -r requirements.txt
-python web.py
+# Run without installing
+python3 main.py src/ -o docs/overview
 ```
 
-Open `http://127.0.0.1:8000`. By default, the site reads Markdown files from
-the `docs/` directory, including nested folders. You can select another folder
-when starting the site:
+## Docs site
 
-```
-python web.py --docs-dir path/to/markdown
+`web.py` serves any folder of Markdown files.
+
+```bash
+python web.py --docs-dir path/to/markdown --port 5000 --host 0.0.0.0
+python web.py --config path/to/production.json
 ```
 
-Customize the site using `codedocplus.json`:
+### Configuration
+
+Create a `codedocplus.json` in your project root:
 
 ```json
 {
-  "title": "My Project",
-  "tagline": "Notes and guides for the team.",
+  "title": "My Project Docs",
+  "tagline": "API reference generated from source.",
   "docs_dir": "docs",
+  "logo": "assets/logo.png",
+  "footer_text": "Built with CodeDocPlus",
+
   "theme": {
     "accent": "#c6532f",
-    "background": "#f3f0e8",
-    "surface": "#fffdf8",
-    "text": "#25271f",
-    "muted": "#74776b",
-    "border": "#d9d5c9"
+    "background": "#f5f5f5",
+    "surface": "#ffffff",
+    "text": "#333333",
+    "navbar_bg": "#c6532f",
+    "navbar_text": "#ffffff",
+    "font_family": "'Helvetica Neue', Arial, sans-serif",
+    "sidebar_width": "260px",
+    "code_theme": "dark"
   },
+
   "custom_css": "site-overrides.css"
 }
 ```
 
-Paths in the config are relative to the config file. `custom_css` is optional;
-use it to override the site's styles. The theme colors accept three- or
-six-digit hex values. Pass `--config path/to/config.json` to use another
-configuration file. The server binds to `127.0.0.1` by default; use `--host`
-and `--port` to change its address.
+<details>
+<summary>All theme options</summary>
 
-The site includes page navigation, a keyboard-focusable page filter (`/`),
-per-page heading links, Markdown tables and code fences, relative links to
-other Markdown pages, and images/assets stored inside the documentation
-folder. Raw HTML embedded in Markdown is not rendered.
+| Key | Default | Description |
+|:---|:---|:---|
+| `accent` | `#c6532f` | Links and highlights |
+| `accent_dark` | `#a03d1e` | Hover color |
+| `background` | `#f5f5f5` | Page background |
+| `surface` | `#ffffff` | Sidebar, cards, panels |
+| `text` | `#333333` | Body text |
+| `muted` | `#888888` | Secondary text |
+| `border` | `#e0e0e0` | Borders and dividers |
+| `navbar_bg` | `#c6532f` | Top bar background |
+| `navbar_text` | `#ffffff` | Top bar text and icons |
+| `font_family` | `'Helvetica Neue', Arial, sans-serif` | Global font stack |
+| `sidebar_width` | `260px` | Sidebar width |
+| `code_theme` | `dark` | `dark`, `light`, `monokai`, or `github` |
 
-Notes:
-
-- the output directory must already exist,
-- the output file is truncated at the start of every run,
-- files without any `Doc` comment are skipped,
-- ignored by default: `.git`, `node_modules`, `venv`, `__pycache__`, `dist`, `build`, `out`, `target`, `bin`, `obj`, and other common build/tooling directories, plus a list of binary extensions (`.pyc`, `.o`, `.png`, `.zip`, ...).
-
-## Doc comment syntax
-
-Doc comments look like normal comments, but start with the word `Doc`. The comment token depends on the language .
-
-Three tags are recognized:
-
-| Tag | Meaning |
-| --- | --- |
-| `Doc` | starts a section with no heading, everything until the next tag is emitted as code |
-| `Doc code : name` | starts a section with a `## name` heading; a leading comment block becomes description text, the rest is emitted as code |
-| `Doc end` | ends the current section |
-
-Example in C:
-
-```c
-//Doc
-#include <stdio.h>
-
-//Doc code : hello world program
-/*
- * hello world program
- * */
-
-int main(void)
-{
-    printf("hello world");
-    return 0;
-}
-
-//Doc end
-```
-
-Generates:
-
-````markdown
-# main.c
-
-```c
-#include <stdio.h>
-```
-
-## hello world program
-
-hello world program  
-
-```c
-int main(void)
-{
-    printf("hello world");
-    return 0;
-}
-```
-
-````
+</details>
 
 ## Supported languages
 
-| Extension(s) | Single line | Multi line |
-| --- | --- | --- |
-| `.c .h .cpp .cc .cxx .hpp .hh .cs .java .js .jsx .ts .tsx .go .rs .d .swift .kt .kts .php .dart .scala .mm` | `//` | `/* */` |
-| `.pas .pp .inc .fs` | `//` | `(* *)` |
-| `.zig` | `//` | `//` (derived) |
-| `.py .pyw .pyi` | `#` | `""" """` |
-| `.erlang` | `#` | `#` (derived) |
-| `.lua` | `--` | `--[[ ]]` |
-| `.hs` | `--` | `{- -}` |
-| `.asm .s` | `;` | `;` (derived) |
-| `.vb .vbs .bas` | `'` | `'` (derived) |
-| `.tex .sty .cls` | `%` | `%` (derived) |
-| `.m` | `%` | `%{ }%` |
-| `.html .htm .xhtml .xml` | `<!-- -->` (derived) | `<!-- -->` |
-
-Languages with only one comment family derive the other from it: a language with only single line comments treats a run of consecutive comment lines as a multi line block, and a language with only multi line comments uses the pair as a single line comment (e.g. `<!--Doc-->` in HTML).
+| Language family | Extensions | Single-line | Multi-line |
+|:---|:---|:---:|:---:|
+| C-style | `.c` `.h` `.cpp` `.cc` `.cxx` `.hpp` `.hh` `.cs` `.java` `.js` `.jsx` `.ts` `.tsx` `.go` `.rs` `.d` `.swift` `.kt` `.kts` `.php` `.dart` `.scala` `.mm` | `//` | `/* ... */` |
+| Pascal / F# | `.pas` `.pp` `.inc` `.fs` | `//` | `(* ... *)` |
+| Python | `.py` `.pyw` `.pyi` | `#` | `""" ... """` |
+| Erlang | `.erlang` | `#` | `#` |
+| Lua / Haskell | `.lua` `.hs` | `--` | `--[[ ]]` / `{- -}` |
+| Assembly | `.asm` `.s` | `;` | `;` |
+| Basic | `.vb` `.vbs` `.bas` | `'` | `'` |
+| TeX / MATLAB | `.tex` `.sty` `.cls` `.m` | `%` | `%{ ... }%` |
+| HTML / XML | `.html` `.htm` `.xhtml` `.xml` | `<!-- -->` | `<!-- ... -->` |
+| Zig | `.zig` | `//` | `//` |
 
 ## Project layout
 
-- `main.py` — argument parsing and file listing
-- `parser.py` — comment extraction and markdown generation, runs one async worker per file and preserves the file order in the output
-- `langs.py` — supported languages, comment tokens and the extension to family conversion tables
-- `install/` — the curl/PowerShell installers and uninstallers for Linux, macOS and Windows
-
-## Generating this project's own docs
-
-The project documents itself with the command:
-
 ```
-python3 main.py . -o docs -exd test
+.
+├── main.py             # CLI entry point and file crawler
+├── parser.py           # Comment parsing and Markdown generation
+├── langs.py            # Per-language comment syntax
+├── web.py              # Flask docs server
+├── codedocplus.json    # Site config
+├── requirements.txt    # Server dependencies (Flask, markdown-it-py)
+├── install/            # install and uninstall scripts (sh, ps1)
+├── static/             # site.css, site.js
+└── templates/          # base.html, index.html, document.html
 ```
-The documentation is in a docs dir in the project
+
+## Install options
+
+```bash
+# Don't touch shell rc files
+bash install/install.sh --no-modify-path
+
+# Install from a local checkout
+bash install/install.sh --local /path/to/CodeDocPlus
+
+# Uninstall
+codedoc --uninstall
+```
+
+The installer puts `codedoc` in `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\codedoc\bin` (Windows) and adds it to your `PATH`.
+
+## Contributing
+
+Issues and pull requests are welcome. For larger changes, open an issue first so we can talk it through.
+
+## License
+
+[MIT](LICENSE)

@@ -88,3 +88,24 @@ if (tocLinks.length > 0) {
   window.addEventListener("scroll", updateActiveLink, { passive: true });
   updateActiveLink();
 }
+
+
+/* ─── Light / Dark mode toggle ───────────────────────────────────────────── */
+const themeToggle = document.getElementById("theme-toggle");
+const root = document.documentElement;
+
+function applyTheme(isDark) {
+  const theme = isDark ? "dark" : "light";
+  root.setAttribute("data-theme", theme);
+  try {
+    localStorage.setItem("cdp-theme", theme);
+  } catch (e) {}
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const isDark = root.getAttribute("data-theme") === "dark";
+    applyTheme(!isDark);
+  });
+}
+
