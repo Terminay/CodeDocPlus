@@ -1,8 +1,8 @@
-<h1 align="center">CodeDocPlus</h1>
-
-<p align="center">
-  Write docs in your code comments. Get Markdown and a searchable docs site.
-</p>
+<div align="center">
+  <img src="logo.png" width="30%">
+  
+  ![GitHub Repo Banner](https://ghrb.waren.build/render/banner?header=CodeDocPlus&subheader=Generate+searchable+docs+from+code+comments.&bg=00000000&color=FFFFFF&headerfont=DynaPuff&subheaderfont=Cherry+Cream+Soda&support=false)
+</div>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
