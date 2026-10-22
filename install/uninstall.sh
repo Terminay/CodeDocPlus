@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# CodeDoc uninstaller
+# CodeDocPlus uninstaller
 # removes the install dir, the launcher and the PATH lines the installer added
 
-APP="codedoc"
+APP="codedocplus"
 INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$APP"
 BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
 
 rm -rf "$INSTALL_DIR"
-rm -f "$BIN_DIR/$APP"
+rm -f "$BIN_DIR/$APP" "$BIN_DIR/cdp"
 
 # remove the lines the installer added to shell config files
 for cfg in \

@@ -91,7 +91,13 @@ COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$")
 
 
 def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None):
-    config_file = Path(config_path).expanduser().resolve() if config_path else DEFAULT_CONFIG
+    cwd_config = Path.cwd() / "codedocplus.json"
+    if config_path:
+        config_file = Path(config_path).expanduser().resolve()
+    elif cwd_config.is_file():
+        config_file = cwd_config.resolve()
+    else:
+        config_file = DEFAULT_CONFIG
     config = {}
     if config_path is not None and not config_file.is_file():
         raise ValueError(f"site config file does not exist: {config_file}")
@@ -119,7 +125,8 @@ def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None
         raise ValueError("site config 'docs_dir' must be a path string")
     docs_path = Path(configured_docs).expanduser()
     if not docs_path.is_absolute():
-        docs_path = config_file.parent / docs_path
+        base_dir = config_file.parent if config_file != DEFAULT_CONFIG else Path.cwd()
+        docs_path = base_dir / docs_path
     docs_path = docs_path.resolve()
     if not docs_path.is_dir():
         raise ValueError(f"documentation directory does not exist: {docs_path}")
@@ -162,7 +169,8 @@ def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None
             raise ValueError("site config 'custom_css' must be a CSS file path")
         css_path = Path(custom_css).expanduser()
         if not css_path.is_absolute():
-            css_path = config_file.parent / css_path
+            base_dir = config_file.parent if config_file != DEFAULT_CONFIG else Path.cwd()
+            css_path = base_dir / css_path
         css_path = css_path.resolve()
         if css_path.suffix.lower() != ".css" or not css_path.is_file():
             raise ValueError(f"custom CSS file does not exist or is not a .css file: {css_path}")
@@ -175,7 +183,8 @@ def load_site_config(config_path: str | Path | None, docs_dir: str | Path | None
             raise ValueError("site config 'logo' must be a file path string")
         logo_path = Path(logo).expanduser()
         if not logo_path.is_absolute():
-            logo_path = config_file.parent / logo_path
+            base_dir = config_file.parent if config_file != DEFAULT_CONFIG else Path.cwd()
+            logo_path = base_dir / logo_path
         logo_path = logo_path.resolve()
         if not logo_path.is_file():
             raise ValueError(f"logo file does not exist: {logo_path}")
@@ -220,6 +229,45 @@ def document_record(path: Path, docs_root: Path):
     relative_path = path.relative_to(docs_root).as_posix()
     title = path.stem.replace("-", " ").replace("_", " ").strip().title()
     return {"path": relative_path, "title": title}
+
+
+def build_nav_sections(docs_root: Path):
+    if not docs_root or not docs_root.is_dir():
+        return []
+    raw_files = document_files(docs_root)
+    sections_map = {}
+
+    for path in raw_files:
+        relative = path.relative_to(docs_root)
+        record = document_record(path, docs_root)
+
+        if len(relative.parts) > 1:
+            section_name = " / ".join(
+                part.replace("-", " ").replace("_", " ").strip().title()
+                for part in relative.parts[:-1]
+            )
+        else:
+            section_name = "Documentation"
+
+        if section_name not in sections_map:
+            sections_map[section_name] = []
+        sections_map[section_name].append(record)
+
+    ordered_sections = []
+    if "Documentation" in sections_map:
+        ordered_sections.append({
+            "name": "Documentation",
+            "documents": sections_map.pop("Documentation"),
+        })
+
+    for name in sorted(sections_map.keys()):
+        ordered_sections.append({
+            "name": name,
+            "documents": sections_map[name],
+        })
+
+    return ordered_sections
+
 
 
 def heading_slug(text: str) -> str:
@@ -293,7 +341,11 @@ def render_markdown(source: str, document_path: str):
 
 def create_app(config_path: str | Path | None = None, docs_dir: str | Path | None = None):
     settings = load_site_config(config_path, docs_dir)
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(PROJECT_ROOT / "templates"),
+        static_folder=str(PROJECT_ROOT / "static"),
+    )
     app.config.update(
         SITE_TITLE=settings["title"],
         TAGLINE=settings["tagline"],
@@ -306,6 +358,7 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
 
     @app.context_processor
     def inject_site_settings():
+        root = app.config.get("DOCS_ROOT")
         return {
             "site_title": app.config["SITE_TITLE"],
             "tagline": app.config["TAGLINE"],
@@ -313,6 +366,7 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
             "custom_css": app.config["CUSTOM_CSS"],
             "logo": app.config["LOGO"],
             "footer_text": app.config["FOOTER_TEXT"],
+            "nav_sections": build_nav_sections(root) if root else [],
         }
 
     @app.get("/")

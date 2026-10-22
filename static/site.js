@@ -12,6 +12,11 @@ if (search) {
       link.hidden = !matches;
       if (matches) visible += 1;
     }
+    document.querySelectorAll(".sidebar-section").forEach(sec => {
+      const secLinks = sec.querySelectorAll("[data-document-link]");
+      const hasVisible = [...secLinks].some(l => !l.hidden);
+      sec.hidden = !hasVisible;
+    });
     if (emptyState) emptyState.hidden = visible > 0 || query.length === 0;
   });
 
