@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# CodeDoc installer
+# CodeDocPlus installer
 #
 # usage:
 #   curl -fsSL https://raw.githubusercontent.com/Terminay/CodeDocPlus/main/install/install.sh | bash
@@ -125,7 +125,7 @@ download_and_install() {
 }
 
 stamp_commit() {
-    # remember the commit this install came from so codedoc --update
+    # remember the commit this install came from so cdp update
     # can report "already up to date", fails silently on no network
     local sha
     sha="$(curl -fsSL --max-time 10 "https://api.github.com/repos/$REPO/commits/$BRANCH" 2>/dev/null \

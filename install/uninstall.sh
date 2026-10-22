@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# CodeDoc uninstaller
+# CodeDocPlus uninstaller
 # removes the install dir, the launcher and the PATH lines the installer added
 
 APP="codedocplus"
