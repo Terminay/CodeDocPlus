@@ -1,12 +1,12 @@
 # CodeDoc installer for Windows
 #
 # usage:
-#   powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.ps1 | iex"
+#   powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Terminay/CodeDocPlus/main/install/install.ps1 | iex"
 
 $ErrorActionPreference = "Stop"
 
-$App = "codedoc"
-$Repo = "vortex3964/CodeDoc"
+$App = "codedocplus"
+$Repo = "Terminay/CodeDocPlus"
 $Branch = "main"
 
 $InstallDir = Join-Path $env:LOCALAPPDATA $App
@@ -57,6 +57,8 @@ try {
     New-Item -ItemType Directory -Path $BinDir | Out-Null
     $launcherBody = "@echo off`r`nwhere python3 >nul 2>&1 && (python3 `"$InstallDir\main.py`" %*) || (py -3 `"$InstallDir\main.py`" %*)"
     Set-Content -Path $Launcher -Value $launcherBody -Encoding ASCII
+    $shortLauncher = Join-Path $BinDir "cdp.cmd"
+    Set-Content -Path $shortLauncher -Value $launcherBody -Encoding ASCII
 
     # add the bin dir to the user PATH
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -69,7 +71,7 @@ try {
     Write-Host ""
     Write-Host "$App installed!"
     Write-Host "install dir: $InstallDir"
-    Write-Host "open a new terminal and run: codedoc . -o out"
+    Write-Host "open a new terminal and run: cdp build . -o docs/api  or  cdp preview ."
 }
 finally {
     Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue

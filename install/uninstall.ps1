@@ -1,9 +1,9 @@
-# CodeDoc uninstaller for Windows
+# CodeDocPlus uninstaller for Windows
 # removes the install dir, the launcher and the user PATH entry
 
 $ErrorActionPreference = "Stop"
 
-$App = "codedoc"
+$App = "codedocplus"
 $InstallDir = Join-Path $env:LOCALAPPDATA $App
 $BinDir = Join-Path $InstallDir "bin"
 

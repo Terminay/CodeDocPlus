@@ -13,37 +13,37 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
   <a href="#how-it-works">How it works</a> ·
+  <a href="#cli-reference">CLI Reference</a> ·
   <a href="#docs-site">Docs site</a> ·
-  <a href="#supported-languages">Languages</a> ·
-  <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.ru.md">Русский</a>
+  <a href="#supported-languages">Languages</a>
 </p>
 
 ---
 
-CodeDocPlus pulls documentation out of special comments in your source files and writes it to Markdown, keeping your folder structure. It also ships a small web server that turns those Markdown files into a docs site with search, a table of contents, and light/dark themes.
+CodeDocPlus pulls documentation out of special comments in your source files, formats it into clean Markdown, and ships a built-in searchable web server with navigation, dark mode, and customizable themes.
 
-- **No dependencies for the CLI.** Pure Python 3.10+ standard library.
+- **Zero dependencies for generating docs.** Core CLI runs on pure Python 3.10+ standard library.
+- **Built-in docs viewer.** Run `cdp serve` or `cdp preview` with lazy-loaded dependencies.
 - **25+ languages.** C, C++, Rust, Go, Python, TypeScript, Java, Swift, Zig, Lua, and more.
-- **Docs live next to the code.** Mark a region with a comment, and it shows up in the output.
-- **Built-in docs site.** Sidebar navigation, sticky table of contents, search (press `/`), and light/dark mode.
-- **Themeable.** Colors, fonts, code highlighting, logo, and footer are set in one JSON file.
+- **Docs live next to code.** Mark a region with a comment, and it shows up in the output.
+- **Search & Themes.** Sidebar navigation, sticky table of contents, fast search (`/`), and light/dark mode.
+- **Themeable.** Colors, fonts, code highlighting, and branding in a single `codedocplus.json`.
 
 ## Quick start
 
-Install:
+### Install
 
 ```bash
 # Linux / macOS
-curl -fsSL https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Terminay/CodeDocPlus/main/install/install.sh | bash
 ```
 
 ```powershell
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/vortex3964/CodeDoc/main/install/install.ps1 | iex
+irm https://raw.githubusercontent.com/Terminay/CodeDocPlus/main/install/install.ps1 | iex
 ```
 
-Mark up some code:
+### Mark up some code
 
 ```c
 //Doc code : Entry point
@@ -58,17 +58,22 @@ int main(void)
 //Doc end
 ```
 
-Generate Markdown:
+### Generate Markdown
 
 ```bash
-codedoc src/ -o docs/api
+cdp build src/ -o docs/api
 ```
 
-Serve it:
+### Serve the docs website
 
 ```bash
-pip install -r requirements.txt
-python web.py
+cdp serve
+```
+
+### Or do both in one step:
+
+```bash
+cdp preview src/
 ```
 
 Open <http://127.0.0.1:8000>.
@@ -104,51 +109,76 @@ int main(void)
 Files are scanned concurrently, and the output mirrors your directory layout.
 
 ```
-source files  →  codedoc (parser)  →  Markdown  →  web.py  →  docs site
+source files  →  cdp build (parser)  →  Markdown  →  cdp serve (web)  →  docs site
 ```
 
 ## CLI reference
 
+CodeDocPlus can be invoked via `cdp` or `codedocplus`:
+
+```bash
+cdp <command> [options]
 ```
-codedoc [path] [-o OUT] [-exd DIRS ...] [-exf FILES ...] [-c] [-ca]
+
+### Available commands:
+
+| Command | Alias | Description |
+|:---|:---|:---|
+| `cdp build [path]` | `generate` | Scans source files and generates documentation Markdown |
+| `cdp serve` | `web` | Starts the Flask web server to view the documentation |
+| `cdp preview [path]` | | Generates documentation into `/docs` and immediately opens the web viewer |
+| `cdp init` | | Creates a starter `codedocplus.json` in the current working directory |
+| `cdp update` | | Checks for and installs the latest version from GitHub |
+| `cdp uninstall` | | Removes the launcher, installation files, and PATH entries |
+
+---
+
+### `cdp build [path]` options
+
+```text
+cdp build [path] [-o OUT] [-exd DIRS ...] [-exf FILES ...] [-c] [-ca]
 ```
 
 | Option | Default | Description |
 |:---|:---|:---|
 | `path` | `.` | Directory to scan |
-| `-o`, `--output` | `out` | Output Markdown file (`.md` is added for you) |
+| `-o`, `--output` | `out` | Output Markdown file (`.md` is added automatically) |
 | `-exd`, `--exclude-dirs` | built-in list | Extra directories to skip |
 | `-exf`, `--exclude-files` | none | Specific files to skip |
 | `-c`, `--clean` | off | Remove `Doc end` markers from source files after reading |
 | `-ca`, `--cleanall` | off | Remove all `Doc` markers, leaving plain source |
-| `--update` | | Install the latest release |
-| `--uninstall` | | Remove the launcher and PATH entry |
 
-More examples:
+---
 
-```bash
-# Scan the current directory, write out.md
-codedoc
+### `cdp serve` options
 
-# Skip folders and files
-codedoc . -o out -exd test build cache -exf setup.py
-
-# Run without installing
-python3 main.py src/ -o docs/overview
+```text
+cdp serve [--docs-dir DIR] [--config CONFIG] [--host HOST] [--port PORT] [--open]
 ```
 
-## Docs site
+| Option | Default | Description |
+|:---|:---|:---|
+| `--docs-dir` | `docs` | Directory containing Markdown documentation |
+| `--config` | `codedocplus.json` | Path to site config |
+| `--host` | `127.0.0.1` | Network interface to bind |
+| `--port` | `8000` | Port to bind |
+| `--open` | off | Automatically open default browser on launch |
 
-`web.py` serves any folder of Markdown files.
+---
 
-```bash
-python web.py --docs-dir path/to/markdown --port 5000 --host 0.0.0.0
-python web.py --config path/to/production.json
+### `cdp preview [path]` options
+
+```text
+cdp preview [path] [-o OUT] [--port PORT] [--host HOST] [--no-open]
 ```
 
-### Configuration
+Generates Markdown into the local `docs/` folder (default `docs/index.md`) and starts the server with browser auto-open enabled.
 
-Create a `codedocplus.json` in your project root:
+---
+
+## Docs site configuration
+
+Run `cdp init` or create a `codedocplus.json` in your project root:
 
 ```json
 {
@@ -213,31 +243,16 @@ Create a `codedocplus.json` in your project root:
 
 ```
 .
-├── main.py             # CLI entry point and file crawler
+├── main.py             # CLI entry point (build, serve, preview, init, update)
 ├── parser.py           # Comment parsing and Markdown generation
 ├── langs.py            # Per-language comment syntax
-├── web.py              # Flask docs server
-├── codedocplus.json    # Site config
+├── web.py              # Flask docs server and Markdown renderer
+├── codedocplus.json    # Default site config template
 ├── requirements.txt    # Server dependencies (Flask, markdown-it-py)
-├── install/            # install and uninstall scripts (sh, ps1)
+├── install/            # Install and uninstall scripts (install.sh, install.ps1)
 ├── static/             # site.css, site.js
 └── templates/          # base.html, index.html, document.html
 ```
-
-## Install options
-
-```bash
-# Don't touch shell rc files
-bash install/install.sh --no-modify-path
-
-# Install from a local checkout
-bash install/install.sh --local /path/to/CodeDocPlus
-
-# Uninstall
-codedoc --uninstall
-```
-
-The installer puts `codedoc` in `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\codedoc\bin` (Windows) and adds it to your `PATH`.
 
 ## Contributing
 
