@@ -439,7 +439,7 @@ async def cmd_preview(args):
 
     file_list = list_files_req(args.path, args.exc_d, args.exc_f)
     print(f"Generating documentation from '{args.path}' into '{out_file}'...")
-    await dispatch(file_list, str(out_file), clean=False, cleanall=False)
+    await dispatch(file_list, str(out_file), clean=False, clean_all=False)
     print(f"Documentation written to {out_file}")
 
     run_serve(

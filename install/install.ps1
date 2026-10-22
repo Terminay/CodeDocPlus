@@ -1,7 +1,12 @@
-# CodeDoc installer for Windows
+# CodeDocPlus installer for Windows
 #
 # usage:
 #   powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Terminay/CodeDocPlus/main/install/install.ps1 | iex"
+#   powershell -ExecutionPolicy Bypass -File .\install\install.ps1 -Local .
+
+param(
+    [string]$Local = ""
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -12,6 +17,7 @@ $Branch = "main"
 $InstallDir = Join-Path $env:LOCALAPPDATA $App
 $BinDir = Join-Path $InstallDir "bin"
 $Launcher = Join-Path $BinDir "$App.cmd"
+$ShortLauncher = Join-Path $BinDir "cdp.cmd"
 
 # check for python3 or the py launcher
 $python = Get-Command python3 -ErrorAction SilentlyContinue
@@ -28,51 +34,62 @@ if ($pyVer -match "Python (\d+)\.(\d+)") {
     }
 }
 
-$tmpDir = Join-Path $env:TEMP "$App-install-$PID"
-New-Item -ItemType Directory -Path $tmpDir | Out-Null
-try {
-    $tarball = Join-Path $tmpDir "$App.tar.gz"
-    $url = "https://github.com/$Repo/archive/refs/heads/$Branch.tar.gz"
-    Write-Host "downloading $App from $url"
-    Invoke-WebRequest -Uri $url -OutFile $tarball
-    tar -xzf $tarball -C $tmpDir
-
-    $top = Get-ChildItem $tmpDir -Directory | Select-Object -First 1
-    if (-not $top) { throw "failed to extract the archive" }
-
+if ($Local) {
+    $localPath = (Resolve-Path $Local).Path
+    if (-not (Test-Path (Join-Path $localPath "main.py"))) {
+        Write-Error "$localPath does not look like the $App project (main.py not found)"
+        exit 1
+    }
+    Write-Host "installing $App from local path $localPath"
     if (Test-Path $InstallDir) { Remove-Item $InstallDir -Recurse -Force }
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
-    Copy-Item (Join-Path $top.FullName "*") $InstallDir -Recurse -Force
-
-    # remember the commit this install came from so "codedoc --update"
-    # can report "already up to date", fails silently on no network
+    Copy-Item (Join-Path $localPath "*") $InstallDir -Recurse -Force -Exclude ".git", "__pycache__", ".pytest_cache"
+} else {
+    $tmpDir = Join-Path $env:TEMP "$App-install-$PID"
+    New-Item -ItemType Directory -Path $tmpDir | Out-Null
     try {
-        $sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/commits/$Branch" -TimeoutSec 10).sha
-        if ($sha) { Set-Content -Path (Join-Path $InstallDir ".commit") -Value $sha }
-    } catch {
-        # no stamp, the first codedoc --update will fetch the latest
+        $tarball = Join-Path $tmpDir "$App.tar.gz"
+        $url = "https://github.com/$Repo/archive/refs/heads/$Branch.tar.gz"
+        Write-Host "downloading $App from $url"
+        Invoke-WebRequest -Uri $url -OutFile $tarball
+        tar -xzf $tarball -C $tmpDir
+
+        $top = Get-ChildItem $tmpDir -Directory | Select-Object -First 1
+        if (-not $top) { throw "failed to extract the archive" }
+
+        if (Test-Path $InstallDir) { Remove-Item $InstallDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $InstallDir | Out-Null
+        Copy-Item (Join-Path $top.FullName "*") $InstallDir -Recurse -Force
+
+        # remember the commit this install came from so "cdp update"
+        # can report "already up to date", fails silently on no network
+        try {
+            $sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/commits/$Branch" -TimeoutSec 10).sha
+            if ($sha) { Set-Content -Path (Join-Path $InstallDir ".commit") -Value $sha }
+        } catch {
+            # no stamp, the first update will fetch the latest
+        }
     }
-
-    # write the launcher, it tries python3 first and falls back to the py launcher
-    New-Item -ItemType Directory -Path $BinDir | Out-Null
-    $launcherBody = "@echo off`r`nwhere python3 >nul 2>&1 && (python3 `"$InstallDir\main.py`" %*) || (py -3 `"$InstallDir\main.py`" %*)"
-    Set-Content -Path $Launcher -Value $launcherBody -Encoding ASCII
-    $shortLauncher = Join-Path $BinDir "cdp.cmd"
-    Set-Content -Path $shortLauncher -Value $launcherBody -Encoding ASCII
-
-    # add the bin dir to the user PATH
-    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-    if ($userPath -notlike "*$BinDir*") {
-        $newPath = if ($userPath) { "$userPath;$BinDir" } else { $BinDir }
-        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-        Write-Host "added $BinDir to the user PATH"
+    finally {
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
     }
+}
 
-    Write-Host ""
-    Write-Host "$App installed!"
-    Write-Host "install dir: $InstallDir"
-    Write-Host "open a new terminal and run: cdp build . -o docs/api  or  cdp preview ."
+# write the launcher, it tries python3 first and falls back to the py launcher
+New-Item -ItemType Directory -Path $BinDir | Out-Null
+$launcherBody = "@echo off`r`nwhere python3 >nul 2>&1 && (python3 `"$InstallDir\main.py`" %*) || (py -3 `"$InstallDir\main.py`" %*)"
+Set-Content -Path $Launcher -Value $launcherBody -Encoding ASCII
+Set-Content -Path $ShortLauncher -Value $launcherBody -Encoding ASCII
+
+# add the bin dir to the user PATH
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$BinDir*") {
+    $newPath = if ($userPath) { "$userPath;$BinDir" } else { $BinDir }
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Write-Host "added $BinDir to the user PATH"
 }
-finally {
-    Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
-}
+
+Write-Host ""
+Write-Host "$App installed!"
+Write-Host "install dir: $InstallDir"
+Write-Host "open a new terminal and run: cdp build . -o docs/api  or  cdp preview ."

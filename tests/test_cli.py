@@ -7,8 +7,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+import main
 
 
 class CLISubcommandTests(unittest.TestCase):
@@ -79,6 +82,26 @@ class CLISubcommandTests(unittest.TestCase):
         with open(config_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("title", data)
+
+    def test_cli_preview_generation(self):
+        args = main.argparse.Namespace(
+            path=str(self.src_dir),
+            out=None,
+            exc_d=[],
+            exc_f=[],
+            config=None,
+            host="127.0.0.1",
+            port=8000,
+            no_open=True,
+        )
+
+        with patch("main.run_serve") as mock_serve, patch("pathlib.Path.cwd", return_value=self.test_dir):
+            asyncio.run(main.cmd_preview(args))
+            mock_serve.assert_called_once()
+            preview_md = self.test_dir / "docs" / "index.md"
+            self.assertTrue(preview_md.is_file())
+            content = preview_md.read_text(encoding="utf-8")
+            self.assertIn("Add numbers", content)
 
 
 if __name__ == "__main__":
