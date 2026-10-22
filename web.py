@@ -231,6 +231,45 @@ def document_record(path: Path, docs_root: Path):
     return {"path": relative_path, "title": title}
 
 
+def build_nav_sections(docs_root: Path):
+    if not docs_root or not docs_root.is_dir():
+        return []
+    raw_files = document_files(docs_root)
+    sections_map = {}
+
+    for path in raw_files:
+        relative = path.relative_to(docs_root)
+        record = document_record(path, docs_root)
+
+        if len(relative.parts) > 1:
+            section_name = " / ".join(
+                part.replace("-", " ").replace("_", " ").strip().title()
+                for part in relative.parts[:-1]
+            )
+        else:
+            section_name = "Documentation"
+
+        if section_name not in sections_map:
+            sections_map[section_name] = []
+        sections_map[section_name].append(record)
+
+    ordered_sections = []
+    if "Documentation" in sections_map:
+        ordered_sections.append({
+            "name": "Documentation",
+            "documents": sections_map.pop("Documentation"),
+        })
+
+    for name in sorted(sections_map.keys()):
+        ordered_sections.append({
+            "name": name,
+            "documents": sections_map[name],
+        })
+
+    return ordered_sections
+
+
+
 def heading_slug(text: str) -> str:
     slug = re.sub(r"[^\w-]+", "-", text.casefold(), flags=re.UNICODE).strip("-")
     return slug or "section"
@@ -319,6 +358,7 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
 
     @app.context_processor
     def inject_site_settings():
+        root = app.config.get("DOCS_ROOT")
         return {
             "site_title": app.config["SITE_TITLE"],
             "tagline": app.config["TAGLINE"],
@@ -326,6 +366,7 @@ def create_app(config_path: str | Path | None = None, docs_dir: str | Path | Non
             "custom_css": app.config["CUSTOM_CSS"],
             "logo": app.config["LOGO"],
             "footer_text": app.config["FOOTER_TEXT"],
+            "nav_sections": build_nav_sections(root) if root else [],
         }
 
     @app.get("/")

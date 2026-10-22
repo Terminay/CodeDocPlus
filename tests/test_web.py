@@ -100,6 +100,18 @@ class DocumentationSiteTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "site config file does not exist"):
             create_app(config_path=self.root / "missing.json")
 
+    def test_nested_sections_in_sidebar(self):
+        (self.docs / "root.md").write_text("# Root Doc", encoding="utf-8")
+        api_dir = self.docs / "api"
+        api_dir.mkdir()
+        (api_dir / "endpoints.md").write_text("# API Endpoints", encoding="utf-8")
+
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Documentation", response.data)
+        self.assertIn(b"Api", response.data)
+        self.assertIn(b"Endpoints", response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

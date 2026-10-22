@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="{{ theme.navbar_bg }}">
-    <title>{{ page_title }} — {{ site_title }}</title>
+    <title>{{ page_title }}: {{ site_title }}</title>
     <!-- Anti-flash theme bootstrap: runs before CSS paints -->
     <script>
       (function(){
@@ -95,23 +95,27 @@
       <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
       <aside class="sidebar" id="sidebar" aria-label="Document navigation">
         <div class="sidebar-inner">
-          <div class="sidebar-section-label">Documentation</div>
-          <nav class="sidebar-nav" aria-label="Documentation pages">
-            {% for document in documents %}
-            <a class="sidebar-link{% if document.path == current_document|default('') %} is-active{% endif %}"
-               href="{{ url_for('show_document', document=document.path) }}"
-               data-document-link>
-              <svg class="sidebar-link-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M10 2v3h3" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-              {{ document.title }}
-            </a>
-            {% else %}
-            <p class="sidebar-empty">No Markdown pages yet.</p>
-            {% endfor %}
-            <p class="search-empty" hidden>No matching pages.</p>
-          </nav>
+          {% for section in nav_sections %}
+          <div class="sidebar-section">
+            <div class="sidebar-section-label">{{ section.name }}</div>
+            <nav class="sidebar-nav" aria-label="{{ section.name }} pages">
+              {% for document in section.documents %}
+              <a class="sidebar-link{% if document.path == current_document|default('') %} is-active{% endif %}"
+                 href="{{ url_for('show_document', document=document.path) }}"
+                 data-document-link>
+                <svg class="sidebar-link-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M10 2v3h3" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                {{ document.title }}
+              </a>
+              {% endfor %}
+            </nav>
+          </div>
+          {% else %}
+          <p class="sidebar-empty">No Markdown pages yet.</p>
+          {% endfor %}
+          <p class="search-empty" hidden>No matching pages.</p>
         </div>
       </aside>
 

@@ -417,6 +417,8 @@ async def cmd_build(args):
     if not out.lower().endswith(".md"):
         out = f"{out}.md"
 
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+
     await dispatch(file_list, out, args.clean, args.cleanall)
     print(f"documentation written to {out}")
 
