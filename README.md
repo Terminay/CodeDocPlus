@@ -19,6 +19,9 @@
 
 ---
 
+> [!NOTE]
+> This is the plus version of the actual [CodeDoc](https://github.com/vortex3964/CodeDoc), ie., it is a fork of the original repository with added features.
+
 CodeDocPlus pulls documentation out of special comments in your source files, formats it into clean Markdown, and ships a built-in searchable web server with navigation, dark mode, and customizable themes.
 
 - **Zero dependencies for generating docs.** Core CLI runs on pure Python 3.10+ standard library.
