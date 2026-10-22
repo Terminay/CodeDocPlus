@@ -1,20 +1,19 @@
 <div align="center">
-  <img src="logo.png" width="30%">
   
-  ![GitHub Repo Banner](https://ghrb.waren.build/render/banner?header=CodeDocPlus&subheader=Generate+searchable+docs+from+code+comments.&bg=00000000&color=FFFFFF&headerfont=DynaPuff&subheaderfont=Cherry+Cream+Soda&support=false)
+  ![GitHub Repo Banner](https://ghrb.waren.build/render/banner?header=+%21%5Bicon+src%3D%22https%3A%2F%2Fraw.githubusercontent.com%2FTerminay%2FCodeDocPlus%2Frefs%2Fheads%2Fmain%2Flogo.png%22+w%3D%22150%25%22%5D+CodeDocPlus&subheader=Document+next+to+your+code.+Serve+it+anywhere.&bg=121214-18181b&color=f4f4f5&subheadercolor=f4f4f5&headerfont=Syne&subheaderfont=JetBrains+Mono&support=false&bgbrightness=103&bggrayscale=30)
+  
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
+    <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey.svg" alt="Platform">
+  </p>
 </div>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
-  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey" alt="Platform">
-</p>
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#cli-reference">CLI Reference</a> ·
-  <a href="#docs-site">Docs site</a> ·
+  <a href="#docs-site-configuration">Docs site config</a> ·
   <a href="#supported-languages">Languages</a>
 </p>
 
@@ -238,21 +237,6 @@ Run `cdp init` or create a `codedocplus.json` in your project root:
 | TeX / MATLAB | `.tex` `.sty` `.cls` `.m` | `%` | `%{ ... }%` |
 | HTML / XML | `.html` `.htm` `.xhtml` `.xml` | `<!-- -->` | `<!-- ... -->` |
 | Zig | `.zig` | `//` | `//` |
-
-## Project layout
-
-```
-.
-├── main.py             # CLI entry point (build, serve, preview, init, update)
-├── parser.py           # Comment parsing and Markdown generation
-├── langs.py            # Per-language comment syntax
-├── web.py              # Flask docs server and Markdown renderer
-├── codedocplus.json    # Default site config template
-├── requirements.txt    # Server dependencies (Flask, markdown-it-py)
-├── install/            # Install and uninstall scripts (install.sh, install.ps1)
-├── static/             # site.css, site.js
-└── templates/          # base.html, index.html, document.html
-```
 
 ## Contributing
 
